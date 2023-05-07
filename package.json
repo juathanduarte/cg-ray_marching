@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "gsap": "^3.11.5",
+    "three": "^0.152.2",
+    "three-orbit-controls": "^82.1.0"
+  },
+  "devDependencies": {
+    "@types/dat.gui": "^0.7.7",
+    "dat.gui": "^0.7.9",
+    "vite": "^4.3.5"
+  }
+}
