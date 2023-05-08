@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import * as dat from "dat.gui";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 import { TimelineMax } from "gsap";
 
@@ -24,6 +23,25 @@ uniform float progress;
 uniform sampler2D texture1;
 uniform sampler2D texture2;
 uniform vec4 resolution;
+
+uniform float moveX;
+uniform float moveY;
+uniform float zoom;
+uniform float rotation;
+
+uniform float details;
+uniform float shine;
+uniform float backgroundColor;
+
+uniform float sinWave;
+uniform float sinCrazy;
+uniform float cosCrazy;
+uniform float tanCrazy;
+uniform float expCrazy;
+uniform float spiral;
+uniform float rays;
+uniform float perpendicularWaves;
+uniform float concentricCircles;
 
 varying vec2 vUv;
 varying vec4 vPosition;
@@ -56,16 +74,105 @@ float sdBox(vec3 p, vec3 b){
     return length(max(d, 0.0)) + min(max(d.x, max(d.y, d.z)), 0.0);
 }
 
+float SineWave(vec3 p){
+  return 1. - sin(p.x + sin(p.y + sin(p.z)));
+}
+
+float Rays(vec3 p) {
+  float t = sin(p.x) + sin(p.y) + sin(p.z);
+  float noise = sin(t * t * t);
+  float rays = step(noise, 0.0);
+  return rays;
+}
+
+float PerpendicularWaves(vec3 p) {
+  return sin(p.x) * sin(p.y) + sin(p.y) * sin(p.z) + sin(p.z) * sin(p.x);
+}
+
+float Spiral(vec3 p) {
+  float r = length(p.xy);
+  float theta = atan(p.y, p.x);
+  float spiral = sin(r + theta * 2.0);
+  return spiral;
+}
+
+float ConcentricCircles(vec3 p) {
+  float r = length(p.xy);
+  float circle = mod(r, 1.0);
+  return circle;
+}
+
 float SineCrazy(vec3 p){
   return 1. - (sin(p.x) + sin(p.y) + sin(p.z))/3.;
 }
 
-float scene(vec3 p){    
-    vec3 p1 = rotate(p, vec3(1., 1., 1.), time/4.);
+float CosineCrazy(vec3 p){
+  return 1. - (cos(p.x) + cos(p.y) + cos(p.z))/3.;
+}
 
-    float scale = 15. + 10. * sin(time/6.);
-    
-    return max(sphere(p), (0.85 - SineCrazy(p1 * scale))/scale);
+float TanCrazy(vec3 p){
+  return 1. - (tan(p.x) + tan(p.y) + tan(p.z))/3.;
+}
+
+float ExpCrazy(vec3 p){
+  return 1. - (exp(-abs(p.x)) + exp(-abs(p.y)) + exp(-abs(p.z)))/3.;
+}
+
+float scene(vec3 p){
+    // renderiza só a esfera
+    // return sphere(p);
+
+    if (rotation > 0.){
+      vec3 p1 = rotate(p, vec3(1., 1., 1.), time/10.);
+
+      float scale = 15. + 10. * sin(time/6.);
+
+      if (sinWave > 0.){
+        return max(sphere(p), (details - SineWave(p1 * scale))/scale);
+      } else if (sinCrazy > 0.){
+        return max(sphere(p), (details - SineCrazy(p1 * scale))/scale);
+      } else if (cosCrazy > 0.){
+        return max(sphere(p), (details - CosineCrazy(p1 * scale))/scale);
+      } else if (tanCrazy > 0.){
+        return max(sphere(p), (details - TanCrazy(p1 * scale))/scale);
+      } else if (expCrazy > 0.){
+        return max(sphere(p), (details - ExpCrazy(p1 * scale))/scale);
+      } else if (spiral > 0.){
+        return max(sphere(p), (details - Spiral(p1 * scale))/scale);
+      } else if (rays > 0.){
+        return max(sphere(p), (details - Rays(p1 * scale))/scale);
+      } else if (perpendicularWaves > 0.){
+        return max(sphere(p), (details - PerpendicularWaves(p1 * scale))/scale);
+      } else if (concentricCircles > 0.){
+        return max(sphere(p), (details - ConcentricCircles(p1 * scale))/scale);
+      } else {
+        return max(sphere(p), (details - PerpendicularWaves(p1 * scale))/scale);
+      }
+    } else {
+      float scale = 15. + 10. * sin(time/6.);
+      
+            if (sinWave > 0.){
+        return max(sphere(p), (details - SineWave(p * scale))/scale);
+      } else if (sinCrazy > 0.){
+        return max(sphere(p), (details - SineCrazy(p * scale))/scale);
+      } else if (cosCrazy > 0.){
+        return max(sphere(p), (details - CosineCrazy(p * scale))/scale);
+      } else if (tanCrazy > 0.){
+        return max(sphere(p), (details - TanCrazy(p * scale))/scale);
+      } else if (expCrazy > 0.){
+        return max(sphere(p), (details - ExpCrazy(p * scale))/scale);
+      } else if (spiral > 0.){
+        return max(sphere(p), (details - Spiral(p * scale))/scale);
+      } else if (rays > 0.){
+        return max(sphere(p), (details - Rays(p * scale))/scale);
+      } else if (perpendicularWaves > 0.){
+        return max(sphere(p), (details - PerpendicularWaves(p * scale))/scale);
+      } else if (concentricCircles > 0.){
+        return max(sphere(p), (details - ConcentricCircles(p * scale))/scale);
+      } else {
+        return max(sphere(p), (details - PerpendicularWaves(p * scale))/scale);
+      }
+    }
 }
 
 vec3 getNormal(vec3 p){
@@ -82,12 +189,28 @@ vec3 GetColor(float amount){
     return col * amount;
 }
 
+vec3 GetColorAmount(vec3 p){
+    float amount = clamp((backgroundColor - length(p))/2., 0., 1.);
+    vec3 col = 0.5 + 0.5 * cos(6.28318 * (vec3(0.0, 0.33, 0.67) + amount));
+    return col * amount;
+}
+
 void main(){
     vec2 newUV = (vUv - vec2(0.5)) * resolution.zw + vec2(0.5);
 
     vec2 p = newUV - vec2(0.5);
 
-    vec3 camPos = vec3(0., 0., 2.);
+    //o objeto é movido para os lados com o input
+    p.x += moveX * 0.1;
+    p.y += moveY * 0.1;
+
+    //objeto parado
+    // vec3 camPos = vec3(0., 0., 2.);
+
+    //objeto se movendo para trás e para frente
+    vec3 camPos = vec3(0., 0., 3. - zoom * 0.5);
+    // vec3 camPos = vec3(0., 0., 3. * 0.5 * sin(time/4.));
+
 
     vec3 ray = normalize(vec3(p, -1.));
 
@@ -102,27 +225,29 @@ void main(){
 
     for (int i = 0; i <= 64; i++) {
         curDist = scene(rayPos);
-        rayLen += curDist;
+        rayLen += 0.6 * curDist;
 
         rayPos = camPos + ray * rayLen;
 
-        //SE EU COLOCAR UM || rayLen > ?. O FUNDO FICA LOCO
         if (abs(curDist) < 0.001) {
 
           vec3 n = getNormal(rayPos);
 
           float diff = dot(n, light);
 
-          //color = GetColor(diff);
+          // color = GetColor(diff);
           // color = GetColor(2. * length(rayPos));
+          //cor do círculo
+          // color = vec3(0.5, 0.5, 0.5) * diff;
           break;
         }
         //LUZ DE DENTRO
-        color += 0.005* GetColor(5. * length(rayPos));
+        // color += 0.005* GetColor(5. * length(rayPos));
+        color += 0.04 * GetColorAmount(rayPos);
+
 
     }
-
-    gl_FragColor = vec4(color, 1.);
+    gl_FragColor = vec4(color, 1.) * shine + vec4(color, 1.);
 }
 `;
 
@@ -150,7 +275,6 @@ export default class Sketch {
     );
 
     this.camera.position.set(0, 0, 2);
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.time = 0;
 
     this.paused = false;
@@ -160,29 +284,80 @@ export default class Sketch {
     this.addObjects();
     this.resize();
     this.render();
-    this.mouseEvents();
-    // this.settings();
+    this.settings();
+    this.hexToRgb();
   }
 
-  mouseEvents() {
+  hexToRgb() {
     let that = this;
-    this.mouse = new THREE.Vector2();
-    function onMouseMove(event) {
-      that.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-      that.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    function hexToRgb(hex) {
+      if (!hex) {
+        return undefined;
+      }
+      // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+      var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+      hex = hex.replace(shorthandRegex, function (m, r, g, b) {
+        return r + r + g + g + b + b;
+      });
 
-      that.material.uniforms.mouse.value = that.mouse;
+      var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(
+        that.settings.colorA
+      );
+
+      return result
+        ? [
+            parseInt(result[1], 16) / 255,
+            parseInt(result[2], 16) / 255,
+            parseInt(result[3], 16) / 255,
+          ]
+        : null;
     }
-    window.addEventListener("mousemove", onMouseMove, false);
+    that.settings.colorA = hexToRgb(that.settings.colorA);
   }
 
   settings() {
     let that = this;
-    this.settings = {
-      time: 0,
+    that.settings = {
+      moveX: 0,
+      moveY: 0,
+      zoom: 0,
+      rotation: false,
+      details: 1,
+      shine: 0,
+      backgroundColor: 0.7,
+      sinWave: false,
+      sinCrazy: false,
+      cosCrazy: false,
+      tanCrazy: false,
+      expCrazy: false,
+      spiral: false,
+      perpendicularWaves: true,
+      rays: false,
+      concentricCircles: false,
     };
-    this.gui = new dat.GUI();
-    this.gui.add(this.settings, "time", 0, 100, 0.01);
+    that.gui = new dat.GUI();
+    const moveObject = that.gui.addFolder("Move Object");
+    moveObject.add(that.settings, "moveX", -1, 1, 0.01);
+    moveObject.add(that.settings, "moveY", -1, 1, 0.01);
+    moveObject.add(that.settings, "zoom", -4, 4, 0.01);
+    moveObject.add(that.settings, "rotation", true, false, true);
+    moveObject.open();
+    const details = that.gui.addFolder("Details");
+    details.add(that.settings, "details", 0, 1, 0.01);
+    details.add(that.settings, "shine", 0, 2, 0.01);
+    details.add(that.settings, "backgroundColor", 0.7, 5, 0.01);
+    details.open();
+    const typesSphere = that.gui.addFolder("Types of Sphere");
+    typesSphere.add(that.settings, "sinWave", true, false, true);
+    typesSphere.add(that.settings, "sinCrazy", true, false, true);
+    typesSphere.add(that.settings, "cosCrazy", true, false, true);
+    typesSphere.add(that.settings, "tanCrazy", true, false, true);
+    typesSphere.add(that.settings, "expCrazy", true, false, true);
+    typesSphere.add(that.settings, "spiral", true, false, true);
+    typesSphere.add(that.settings, "perpendicularWaves", true, false, true);
+    typesSphere.add(that.settings, "rays", true, false, true);
+    typesSphere.add(that.settings, "concentricCircles", true, false, true);
+    typesSphere.open();
   }
 
   setupResize() {
@@ -216,27 +391,40 @@ export default class Sketch {
     const height = 1;
     this.camera.fov = 2 * (180 / Math.PI) * Math.atan(height / (2 * dist));
 
-    // // if(w/h>1) {
-    // if (this.width / this.height > 1) {
-    //   this.plane.scale.x = this.camera.aspect;
-    //   // this.plane.scale.y = this.camera.aspect;
-    // } else {
-    //   this.plane.scale.y = 1 / this.camera.aspect;
-    // }
+    if (this.width / this.height > 1) {
+      this.plane.scale.x = this.camera.aspect;
+    } else {
+      this.plane.scale.y = 1 / this.camera.aspect;
+    }
 
     this.camera.updateProjectionMatrix();
   }
 
   addObjects() {
     let that = this;
-    this.material = new THREE.ShaderMaterial({
+    that.material = new THREE.ShaderMaterial({
       extensions: {
         derivatives: "#extension GL_OES_standard_derivatives : enable",
       },
       side: THREE.DoubleSide,
       uniforms: {
         time: { type: "f", value: 0 },
-        mouse: { type: "v2", value: new THREE.Vector2(0, 0) },
+        moveX: { type: "f", value: 0 },
+        moveY: { type: "f", value: 0 },
+        zoom: { type: "f", value: 0 },
+        rotation: { type: "f", value: 0 },
+        details: { type: "f", value: 0 },
+        shine: { type: "f", value: 0 },
+        backgroundColor: { type: "f", value: 0 },
+        sinWave: { type: "f", value: 0 },
+        sinCrazy: { type: "f", value: 0 },
+        cosCrazy: { type: "f", value: 0 },
+        tanCrazy: { type: "f", value: 0 },
+        expCrazy: { type: "f", value: 0 },
+        spiral: { type: "f", value: 0 },
+        perpendicularWaves: { type: "f", value: 0 },
+        rays: { type: "f", value: 0 },
+        concentricCircles: { type: "f", value: 0 },
         resolution: { type: "v4", value: new THREE.Vector4() },
         uvRate1: {
           value: new THREE.Vector2(1, 1),
@@ -246,19 +434,39 @@ export default class Sketch {
       fragmentShader: fragmentShader,
     });
 
-    this.geometry = new THREE.PlaneBufferGeometry(1, 1, 1, 1);
-    this.plane = new THREE.Mesh(this.geometry, this.material);
-    this.scene.add(this.plane);
+    that.geometry = new THREE.PlaneBufferGeometry(1, 1, 1, 1);
+    that.plane = new THREE.Mesh(that.geometry, that.material);
+    that.scene.add(that.plane);
   }
 
   render() {
     if (!this.paused) {
       this.time += 0.05;
+
       this.material.uniforms.time.value = this.time;
-      if (this.mouse) {
-        this.material.uniforms.mouse.value = this.mouse;
-      }
+
+      this.material.uniforms.moveX.value = this.settings.moveX;
+      this.material.uniforms.moveY.value = this.settings.moveY;
+      this.material.uniforms.zoom.value = this.settings.zoom;
+      this.material.uniforms.rotation.value = this.settings.rotation;
+
+      this.material.uniforms.details.value = this.settings.details;
+      this.material.uniforms.shine.value = this.settings.shine;
+      this.material.uniforms.backgroundColor.value =
+        this.settings.backgroundColor;
     }
+
+    this.material.uniforms.sinWave.value = this.settings.sinWave;
+    this.material.uniforms.sinCrazy.value = this.settings.sinCrazy;
+    this.material.uniforms.cosCrazy.value = this.settings.cosCrazy;
+    this.material.uniforms.tanCrazy.value = this.settings.tanCrazy;
+    this.material.uniforms.expCrazy.value = this.settings.expCrazy;
+    this.material.uniforms.spiral.value = this.settings.spiral;
+    this.material.uniforms.perpendicularWaves.value =
+      this.settings.perpendicularWaves;
+    this.material.uniforms.rays.value = this.settings.rays;
+    this.material.uniforms.concentricCircles.value =
+      this.settings.concentricCircles;
 
     requestAnimationFrame(this.render.bind(this));
     this.renderer.render(this.scene, this.camera);
