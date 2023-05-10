@@ -1,8 +1,6 @@
 import * as THREE from "three";
 import * as dat from "dat.gui";
 
-import { TimelineMax } from "gsap";
-
 const vertexShader = `
 varying vec2 vUv;
 varying vec2 vCoordinates;
@@ -47,31 +45,31 @@ varying vec2 vUv;
 varying vec4 vPosition;
 
 mat4 rotationMatrix(vec3 axis, float angle){
-    axis = normalize(axis);
-    float s = sin(angle);
-    float c = cos(angle);
-    float oc = 1.0 - c;
+  axis = normalize(axis);
+  float s = sin(angle);
+  float c = cos(angle);
+  float oc = 1.0 - c;
 
-    return mat4(
-        oc * axis.x * axis.x + c,           oc * axis.x * axis.y - axis.z * s,  oc * axis.z * axis.x + axis.y * s,  0.0,
-        oc * axis.x * axis.y + axis.z * s,  oc * axis.y * axis.y + c,           oc * axis.y * axis.z - axis.x * s,  0.0,
-        oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c,           0.0,
-        0.0,                                0.0,                                0.0,                                1.0
-    );
+  return mat4(
+    oc * axis.x * axis.x + c,           oc * axis.x * axis.y - axis.z * s,  oc * axis.z * axis.x + axis.y * s,  0.0,
+    oc * axis.x * axis.y + axis.z * s,  oc * axis.y * axis.y + c,           oc * axis.y * axis.z - axis.x * s,  0.0,
+    oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c,           0.0,
+    0.0,                                0.0,                                0.0,                                1.0
+  );
 }
 
 vec3 rotate(vec3 v, vec3 axis, float angle){
-    mat4 m = rotationMatrix(axis, angle);
-    return (m * vec4(v, 1.0)).xyz;
+  mat4 m = rotationMatrix(axis, angle);
+  return (m * vec4(v, 1.0)).xyz;
 }
 
 float sphere(vec3 p){
-    return length(p) - 0.5;
+  return length(p) - 0.5;
 }
 
 float sdBox(vec3 p, vec3 b){
-    vec3 d = abs(p) - b;
-    return length(max(d, 0.0)) + min(max(d.x, max(d.y, d.z)), 0.0);
+  vec3 d = abs(p) - b;
+  return length(max(d, 0.0)) + min(max(d.x, max(d.y, d.z)), 0.0);
 }
 
 float SineWave(vec3 p){
@@ -119,80 +117,77 @@ float ExpCrazy(vec3 p){
 }
 
 float scene(vec3 p){
-    // renderiza só a esfera
-    // return sphere(p);
+  if (rotation > 0.){
+    vec3 p1 = rotate(p, vec3(1., 1., 1.), time/10.);
 
-    if (rotation > 0.){
-      vec3 p1 = rotate(p, vec3(1., 1., 1.), time/10.);
+    float scale = 15. + 10. * sin(time/6.);
 
-      float scale = 15. + 10. * sin(time/6.);
-
-      if (sinWave > 0.){
-        return max(sphere(p), (details - SineWave(p1 * scale))/scale);
-      } else if (sinCrazy > 0.){
-        return max(sphere(p), (details - SineCrazy(p1 * scale))/scale);
-      } else if (cosCrazy > 0.){
-        return max(sphere(p), (details - CosineCrazy(p1 * scale))/scale);
-      } else if (tanCrazy > 0.){
-        return max(sphere(p), (details - TanCrazy(p1 * scale))/scale);
-      } else if (expCrazy > 0.){
-        return max(sphere(p), (details - ExpCrazy(p1 * scale))/scale);
-      } else if (spiral > 0.){
-        return max(sphere(p), (details - Spiral(p1 * scale))/scale);
-      } else if (rays > 0.){
-        return max(sphere(p), (details - Rays(p1 * scale))/scale);
-      } else if (perpendicularWaves > 0.){
-        return max(sphere(p), (details - PerpendicularWaves(p1 * scale))/scale);
-      } else if (concentricCircles > 0.){
-        return max(sphere(p), (details - ConcentricCircles(p1 * scale))/scale);
-      } else {
-        return max(sphere(p), (details - PerpendicularWaves(p1 * scale))/scale);
-      }
+    if (sinWave > 0.){
+      return max(sphere(p), (details - SineWave(p1 * scale))/scale);
+    } else if (sinCrazy > 0.){
+      return max(sphere(p), (details - SineCrazy(p1 * scale))/scale);
+    } else if (cosCrazy > 0.){
+      return max(sphere(p), (details - CosineCrazy(p1 * scale))/scale);
+    } else if (tanCrazy > 0.){
+      return max(sphere(p), (details - TanCrazy(p1 * scale))/scale);
+    } else if (expCrazy > 0.){
+      return max(sphere(p), (details - ExpCrazy(p1 * scale))/scale);
+    } else if (spiral > 0.){
+      return max(sphere(p), (details - Spiral(p1 * scale))/scale);
+    } else if (rays > 0.){
+      return max(sphere(p), (details - Rays(p1 * scale))/scale);
+    } else if (perpendicularWaves > 0.){
+      return max(sphere(p), (details - PerpendicularWaves(p1 * scale))/scale);
+    } else if (concentricCircles > 0.){
+      return max(sphere(p), (details - ConcentricCircles(p1 * scale))/scale);
     } else {
-      float scale = 15. + 10. * sin(time/6.);
-      
-            if (sinWave > 0.){
-        return max(sphere(p), (details - SineWave(p * scale))/scale);
-      } else if (sinCrazy > 0.){
-        return max(sphere(p), (details - SineCrazy(p * scale))/scale);
-      } else if (cosCrazy > 0.){
-        return max(sphere(p), (details - CosineCrazy(p * scale))/scale);
-      } else if (tanCrazy > 0.){
-        return max(sphere(p), (details - TanCrazy(p * scale))/scale);
-      } else if (expCrazy > 0.){
-        return max(sphere(p), (details - ExpCrazy(p * scale))/scale);
-      } else if (spiral > 0.){
-        return max(sphere(p), (details - Spiral(p * scale))/scale);
-      } else if (rays > 0.){
-        return max(sphere(p), (details - Rays(p * scale))/scale);
-      } else if (perpendicularWaves > 0.){
-        return max(sphere(p), (details - PerpendicularWaves(p * scale))/scale);
-      } else if (concentricCircles > 0.){
-        return max(sphere(p), (details - ConcentricCircles(p * scale))/scale);
-      } else {
-        return max(sphere(p), (details - PerpendicularWaves(p * scale))/scale);
-      }
+      return max(sphere(p), (details - PerpendicularWaves(p1 * scale))/scale);
     }
+  } else {
+    float scale = 15. + 10. * sin(time/6.);
+    
+    if (sinWave > 0.){
+      return max(sphere(p), (details - SineWave(p * scale))/scale);
+    } else if (sinCrazy > 0.){
+      return max(sphere(p), (details - SineCrazy(p * scale))/scale);
+    } else if (cosCrazy > 0.){
+      return max(sphere(p), (details - CosineCrazy(p * scale))/scale);
+    } else if (tanCrazy > 0.){
+      return max(sphere(p), (details - TanCrazy(p * scale))/scale);
+    } else if (expCrazy > 0.){
+      return max(sphere(p), (details - ExpCrazy(p * scale))/scale);
+    } else if (spiral > 0.){
+      return max(sphere(p), (details - Spiral(p * scale))/scale);
+    } else if (rays > 0.){
+      return max(sphere(p), (details - Rays(p * scale))/scale);
+    } else if (perpendicularWaves > 0.){
+      return max(sphere(p), (details - PerpendicularWaves(p * scale))/scale);
+    } else if (concentricCircles > 0.){
+      return max(sphere(p), (details - ConcentricCircles(p * scale))/scale);
+    } else {
+      return max(sphere(p), (details - PerpendicularWaves(p * scale))/scale);
+    }
+  }
 }
 
 vec3 getNormal(vec3 p){
     vec2 e = vec2(0.001, 0.);
     return normalize(vec3(
-        scene(p + e.xyy) - scene(p - e.xyy),
-        scene(p + e.yxy) - scene(p - e.yxy),
-        scene(p + e.yyx) - scene(p - e.yyx)
+      scene(p + e.xyy) - scene(p - e.xyy),
+      scene(p + e.yxy) - scene(p - e.yxy),
+      scene(p + e.yyx) - scene(p - e.yyx)
     ));
 }
 
 vec3 GetColor(float amount){
-    vec3 col = 0.5 + 0.5 * cos(6.28318 * (vec3(0.0, 0.33, 0.67) + amount));
-    return col * amount;
+  vec3 col = 0.5 + 0.5 * cos(6.28318 * (vec3(0.0, 0.33, 0.67) + amount));
+  return col * amount;
 }
 
 vec3 GetColorAmount(vec3 p){
-    float amount = clamp((backgroundColor - length(p))/2., 0., 1.);
-    vec3 col = 0.5 + 0.5 * cos(6.28318 * (vec3(0.0, 0.33, 0.67) + amount));
-    return col * amount;
+  float amount = clamp((backgroundColor - length(p))/2., 0., 1.);
+  vec3 col = 0.5 + 0.5 * cos(6.28318 * (vec3(0.0, 0.33, 0.67) + amount));
+  return col * amount;
 }
 
 void main(){
@@ -200,17 +195,10 @@ void main(){
 
     vec2 p = newUV - vec2(0.5);
 
-    //o objeto é movido para os lados com o input
     p.x += moveX * 0.1;
     p.y += moveY * 0.1;
 
-    //objeto parado
-    // vec3 camPos = vec3(0., 0., 2.);
-
-    //objeto se movendo para trás e para frente
     vec3 camPos = vec3(0., 0., 3. - zoom * 0.5);
-    // vec3 camPos = vec3(0., 0., 3. * 0.5 * sin(time/4.));
-
 
     vec3 ray = normalize(vec3(p, -1.));
 
@@ -224,30 +212,22 @@ void main(){
     vec3 color = vec3(0.);
 
     for (int i = 0; i <= 64; i++) {
-        curDist = scene(rayPos);
-        rayLen += 0.6 * curDist;
+      curDist = scene(rayPos);
+      rayLen += 0.6 * curDist;
 
-        rayPos = camPos + ray * rayLen;
+      rayPos = camPos + ray * rayLen;
 
-        if (abs(curDist) < 0.001) {
+      if (abs(curDist) < 0.001) {
 
-          vec3 n = getNormal(rayPos);
+        vec3 n = getNormal(rayPos);
 
-          float diff = dot(n, light);
+        float diff = dot(n, light);
 
-          // color = GetColor(diff);
-          // color = GetColor(2. * length(rayPos));
-          //cor do círculo
-          // color = vec3(0.5, 0.5, 0.5) * diff;
-          break;
-        }
-        //LUZ DE DENTRO
-        // color += 0.005* GetColor(5. * length(rayPos));
-        color += 0.04 * GetColorAmount(rayPos);
-
-
+        break;
+      }
+      color += 0.04 * GetColorAmount(rayPos);
     }
-    gl_FragColor = vec4(color, 1.) * shine + vec4(color, 1.);
+  gl_FragColor = vec4(color, 1.) * shine + vec4(color, 1.);
 }
 `;
 
