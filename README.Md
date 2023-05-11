@@ -10,7 +10,7 @@ Este repositório contém um projeto de computação gráfica desenvolvido com a
 
 A aplicação oferece os seguintes recursos:
 
-- **Rotação no eixo X/Y/Z** A esfera pode ser renderizada em todos eixos, inclusive dando zoom no eixo Z.
+- **Rotação no eixo X/Y/Z:** A esfera pode ser renderizada em todos eixos, inclusive dando zoom no eixo Z.
 - **Detalhes:** É possível aumentar/diminuir os detalhes na esfera.
 - **Brilho:** É possível aumentar/diminuir o brilho na esfera.
 - **Cor da iluminação:** É possível mudar a cor RGBA da iluminação.
@@ -22,6 +22,7 @@ A aplicação oferece os seguintes recursos:
 A aplicação é desenvolvida utilizando as seguintes tecnologias:
 
 - **WebGL:** É uma API JavaScript para renderização de gráficos em 3D no navegador, sendo amplamente utilizada para criar aplicações de visualização em 3D.
+- **THREE.js:** É uma biblioteca JavaScript/API cross-browser utilizada para criar e exibir gráficos 3D animados em um navegador web compatível com WebGL.
 - **Ray Marching:** É uma técnica de renderização utilizada em computação gráfica que permite criar imagens tridimensionais a partir da interação de raios de luz com objetos virtuais. Essa técnica envolve a criação de uma grade tridimensional de pontos que são percorridos por um raio de luz, permitindo que se determine a distância entre o ponto atual e um objeto virtual.
 
 ## Como utilizar
